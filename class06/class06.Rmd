@@ -2,7 +2,7 @@
 title: "Class06 R functions"
 author: "Amy Prichard"
 date: "January 25, 2019"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -153,12 +153,7 @@ plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
 
 
 ## Question 6: "How would you generalize the original code above to work with any set of input protein structures?"
-
-```{r}
-
-```
-
-
+See Question06.Rmd
 
 
 
