@@ -1,0 +1,90 @@
+---
+title: 'Class 7: Functions and Packages'
+author: "Amy Prichard"
+date: "January 30, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Functions revisited
+
+Load (i.e. **source**) our rescale() function from last day.
+
+```{r}
+source("http://tinyurl.com/rescale-R")
+# loads several functions and couple data frames into the global environment (df1, df2, df3, both_na, both_na2, both_na3, gene_intersect, gene_intersect2, gene_intersect3, gene_intersect4, rescale, rescale2)
+```
+
+Test this function
+
+```{r}
+rescale(1:5)
+```
+
+```{r}
+rescale(c(1:5,"string"))
+```
+
+We want to make this function more robust to these types of errors
+
+warning()  # Gives the user an error message without stopping the function.
+stop()  # Gives the user an error and stops running the function.
+
+rescale2() starts with
+if(!is.numeric(x)) {stop("Input x should be numeric", call.=FALSE)}
+to stop the function if the input is not numeric.
+
+```{r}
+rescale2(c(1:5,"string"))
+```
+
+```{r}
+x <- c( 1, 2, NA, 3, NA)
+y <- c(NA, 3, NA, 3,  4)
+
+is.na(x)
+is.na(y)
+```
+
+```{r}
+is.na(x) & is.na(y)         # When are BOTH lists "NA"?
+sum(is.na(x) & is.na(y))    # How many times does this happen?
+which(is.na(x) & is.na(y))  # Where does this happen?
+```
+
+Now take our working snippet (sum(is.na(x) & is.na(y))) and make a function: "both_na()" which tells you how many overlapping "NA" values there are
+
+But... what if the two lists/vectors have different numbers of items?
+
+```{r}
+x1 <- c(NA, NA, NA)
+y1 <- c(1, NA, NA)
+
+both_na(x1, y1)  # This is ok (as expected).
+```
+
+```{r}
+y2 <- c(1, NA, NA, NA)
+y3 <- c(1, NA, NA, NA, NA)
+
+both_na(x1, y2)  # This doesn't work like we want it to.
+```
+
+Add a stop()
+
+both_na2() starts with
+if(length(x) != length(y)) {stop("Input x and y should be vectors of the same length", call.=FALSE)}
+
+```{r}
+both_na2(x1, y2)
+```
+
+Refine and polish: make our function more useful by returning more information *(see both_na3)*
+
+```{r}
+both_na3(x, y)
+```
+
