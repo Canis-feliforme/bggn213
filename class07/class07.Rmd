@@ -2,7 +2,7 @@
 title: 'Class 7: Functions and Packages'
 author: "Amy Prichard"
 date: "January 30, 2019"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -25,7 +25,7 @@ rescale(1:5)
 ```
 
 ```{r}
-rescale(c(1:5,"string"))
+# rescale(c(1:5,"string"))  # this would throw an error!
 ```
 
 We want to make this function more robust to these types of errors
@@ -38,7 +38,7 @@ if(!is.numeric(x)) {stop("Input x should be numeric", call.=FALSE)}
 to stop the function if the input is not numeric.
 
 ```{r}
-rescale2(c(1:5,"string"))
+# rescale2(c(1:5,"string"))  # this does not throw an error but stops the script
 ```
 
 ```{r}
@@ -79,7 +79,7 @@ both_na2() starts with
 if(length(x) != length(y)) {stop("Input x and y should be vectors of the same length", call.=FALSE)}
 
 ```{r}
-both_na2(x1, y2)
+# both_na2(x1, y2)  # this stops the script!
 ```
 
 Refine and polish: make our function more useful by returning more information *(see both_na3)*

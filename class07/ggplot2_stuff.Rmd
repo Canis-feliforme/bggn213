@@ -2,7 +2,7 @@
 title: "ggplot2 demo"
 author: "Amy Prichard"
 date: "January 30, 2019"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
