@@ -1,26 +1,35 @@
----
-title: "Question 6"
-author: "Amy Prichard"
-date: "January 25, 2019"
-output: github_document
----
+Question 6
+================
+Amy Prichard
+January 25, 2019
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r}
+``` r
 library(bio3d)
 ```
 
+Original Code:
+--------------
 
-## Original Code:
-
-```{r}
+``` r
 s1 <- read.pdb("4AKE")  # kinase with drug
-s2 <- read.pdb("1AKE")  # kinase no drug
-s3 <- read.pdb("1E4Y")  # kinase with drug
+```
 
+    ##   Note: Accessing on-line PDB file
+
+``` r
+s2 <- read.pdb("1AKE")  # kinase no drug
+```
+
+    ##   Note: Accessing on-line PDB file
+    ##    PDB has ALT records, taking A only, rm.alt=TRUE
+
+``` r
+s3 <- read.pdb("1E4Y")  # kinase with drug
+```
+
+    ##   Note: Accessing on-line PDB file
+
+``` r
 s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
 s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
 s3.chainA <- trim.pdb(s3, chain="A", elety="CA")
@@ -30,16 +39,28 @@ s2.b <- s2.chainA$atom$b
 s3.b <- s3.chainA$atom$b
 
 plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor") 
+```
+
+![](Question06_files/figure-markdown_github/unnamed-chunk-2-1.png)
+
+``` r
 plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor") 
+```
+
+![](Question06_files/figure-markdown_github/unnamed-chunk-2-2.png)
+
+``` r
 plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor") 
 ```
 
+![](Question06_files/figure-markdown_github/unnamed-chunk-2-3.png)
 
-
-## "How would you generalize the original code above to work with any set of input protein structures?"
+"How would you generalize the original code above to work with any set of input protein structures?"
+----------------------------------------------------------------------------------------------------
 
 Here is a function that will work for individual PDB codes:
-```{r}
+
+``` r
 read_and_plot <- function(pdb_code) {
   ### DOCUMENTATION
   #   INPUT: any valid PDB code
@@ -63,14 +84,44 @@ read_and_plot <- function(pdb_code) {
 }
 ```
 
-```{r}
+``` r
 read_and_plot("4AKE")  # kinase with drug
+```
+
+    ##   Note: Accessing on-line PDB file
+
+    ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): C:
+    ## \Users\Amy\AppData\Local\Temp\Rtmpmex4Lb/4AKE.pdb exists. Skipping download
+
+![](Question06_files/figure-markdown_github/unnamed-chunk-4-1.png)
+
+``` r
 read_and_plot("1AKE")  # kinase no drug
+```
+
+    ##   Note: Accessing on-line PDB file
+
+    ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): C:
+    ## \Users\Amy\AppData\Local\Temp\Rtmpmex4Lb/1AKE.pdb exists. Skipping download
+
+    ##    PDB has ALT records, taking A only, rm.alt=TRUE
+
+![](Question06_files/figure-markdown_github/unnamed-chunk-4-2.png)
+
+``` r
 read_and_plot("1E4Y")  # kinase with drug
 ```
 
+    ##   Note: Accessing on-line PDB file
+
+    ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): C:
+    ## \Users\Amy\AppData\Local\Temp\Rtmpmex4Lb/1E4Y.pdb exists. Skipping download
+
+![](Question06_files/figure-markdown_github/unnamed-chunk-4-3.png)
+
 Here is a function that will work for a vector of many PBD codes
-```{r}
+
+``` r
 read_and_plot_many <- function(pdb_vector) {
   ### DOCUMENTATION
   #   INPUT: a vector consisting of PDB codes
@@ -96,8 +147,29 @@ read_and_plot_many <- function(pdb_vector) {
 }
 ```
 
-```{r}
+``` r
 PDB_codes <- c("4AKE", "1AKE", "1E4Y")
 
 read_and_plot_many(PDB_codes)
 ```
+
+    ##   Note: Accessing on-line PDB file
+
+    ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): C:
+    ## \Users\Amy\AppData\Local\Temp\Rtmpmex4Lb/4AKE.pdb exists. Skipping download
+
+    ##   Note: Accessing on-line PDB file
+
+    ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): C:
+    ## \Users\Amy\AppData\Local\Temp\Rtmpmex4Lb/1AKE.pdb exists. Skipping download
+
+![](Question06_files/figure-markdown_github/unnamed-chunk-6-1.png)
+
+    ##    PDB has ALT records, taking A only, rm.alt=TRUE
+
+    ##   Note: Accessing on-line PDB file
+
+    ## Warning in get.pdb(file, path = tempdir(), verbose = FALSE): C:
+    ## \Users\Amy\AppData\Local\Temp\Rtmpmex4Lb/1E4Y.pdb exists. Skipping download
+
+![](Question06_files/figure-markdown_github/unnamed-chunk-6-2.png)![](Question06_files/figure-markdown_github/unnamed-chunk-6-3.png)
