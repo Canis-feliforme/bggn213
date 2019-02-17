@@ -1,0 +1,174 @@
+---
+title: "Class 11"
+author: "Amy Prichard"
+date: "02/15/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Class 11
+
+## Section 1: Introduction to the RCSB Protein Data Bank (PDB)
+
+### Q1: Download a CSV file from the PDB site (accessible from “Analyze” -> “PDB Statistics” -> “by Experimental Method and Molecular Type”). Move this CSV file into your RStudio project and determine the percentage of structures solved by X-Ray and Electron Microscopy. Also can you determine what proportion of structures are protein?
+
+```{r}
+stats <- read.csv("Data Export Summary.csv", row.names=1)  # sets col1 as names
+stats
+```
+
+```{r}
+# Determine the percentage of structures solved by X-Ray and Electron Microscopy
+
+bymethod <- (stats$Total/sum(stats$Total))*100
+names(bymethod) <- rownames(stats)
+bymethod
+
+# X-ray crystallography
+bymethod[1]
+
+# Electron microscopy
+bymethod[3]
+```
+
+```{r}
+# What proportion of structures are protein?
+sum(stats$Proteins)/sum(stats$Total)
+```
+
+Another way to get a data.frame from a website into R (esp. useful if "save as .csv" isn't an option)
+```{r}
+# install.packages("datapasta")
+
+# Addins -> Paste as data.frame
+tmp <- data.frame(stringsAsFactors=FALSE,
+   Experimental.Method = c("X-Ray", "NMR", "Electron Microscopy", "Other",
+                           "Multi Method", "Total"),
+              Proteins = c(124770, 10988, 2057, 250, 127, 138192),
+         Nucleic.Acids = c(1993, 1273, 31, 4, 5, 3306),
+    Protein_NA.Complex = c(6451, 257, 723, 6, 2, 7439),
+                 Other = c(10, 8, 0, 13, 1, 32),
+                 Total = c(133224, 12526, 2811, 273, 135, 148969)
+)
+```
+
+### Q2: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB?
+1138
+
+## Section 2: Visualizing the HIV-1 protease structure
+
+### Q3: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure?
+The resolution is not high enough to see tiny hydrogen atoms.
+
+### Q4: There is a conserved water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have (see note below)?
+
+### Q5: As you have hopefully observed HIV protease is a homodimer (i.e. it is composed of two identical chains). With the aid of the graphic display and the sequence viewer extension can you identify secondary structure elements that are likely to only form in the dimer rather than the monomer?
+
+## Section3: Introduction to Bio3D in R
+
+```{r}
+library(bio3d)
+pdb <- read.pdb("1hsg")
+pdb
+```
+
+### Q6. How many amino acid residues are there in this pdb object and what are the two nonprotein residues?
+There are 198 amino acid residues. Two non-protein residues are HOH (water) and MK1 (Merck-1, the drug)
+
+### Q7. What type of R object is pdb$atom?
+```{r}
+str(pdb$atom)
+```
+
+## Section 4: Atom selection
+
+```{r}
+# Select all C-alpha atoms (return their indices)
+ca.inds <- atom.select(pdb, "calpha")
+ca.inds
+
+# Print details of the first few selected atoms
+head(pdb$atom[ca.inds$atom,])
+
+# And selected xyz coordinates
+head(pdb$xyz[,ca.inds$xyz])
+```
+
+```{r}
+# Select chain A
+a.inds <- atom.select(pdb, chain="A")
+
+# Select C-alphas of chain A
+ca.inds <- atom.select(pdb, "calpha", chain="A")
+
+# We can combine multiple selection criteria to return their intersection
+cab.inds <- atom.select(pdb, elety=c("CA","CB"), chain="A", resno=10:20)
+```
+
+### Q8. Use the Bio3D write.pdb() function to write out a protein only PDB file for viewing in VMD. Also write out a second separate PDB file for the ligand with residue name MK1
+Extract the protein only portion of this PDB structure and write it out to a new PDB file.
+```{r}
+p_inds <- atom.select(pdb, "protein")
+p_inds$atom
+pdb$atom[p_inds$atom,]
+
+protein.pdb <- trim.pdb(pdb, p_inds)
+protein.pdb
+
+write.pdb(protein.pdb, file="protein.pdb")
+```
+Extract the ligand (i.e. drug) and write out to a seperate file.
+```{r}
+l_inds <- atom.select(pdb, "ligand")
+l_inds$atom  # indeces where ligand atoms are
+pdb$atom[l_inds$atom,]
+
+ligand.pdb <- trim.pdb(pdb, l_inds)
+ligand.pdb
+
+# view(ligand.pdb)  # only works with bio3d.view library (see below)
+
+write.pdb(ligand.pdb, file="ligand.pdb")
+```
+
+## Section 5: 3D structure viewing in R
+
+```{r}
+# The 'devtools' package allows us to install development versions
+# install.packages("devtools")
+
+# Install the bio3d.view package from bitbucket
+# devtools::install_bitbucket("Grantlab/bio3d-view")
+  # note: devtools::install_bitbucket() only accesses devtools for this one command rather than loading all of devtools (with the library() function)
+
+# As it turns out, Rtools won't install, so bio3d.view won't be loaded.
+
+# Load the package
+# library("bio3d.view")
+
+# view the 3D structure
+# view("1HSG", "overview", col="sse")
+```
+
+
+
+```{r}
+new_pdb <- read.pdb("1HEL")
+
+# Normal Mode Analysis
+modes <- nma(new_pdb)
+plot(modes)
+```
+
+```{r}
+m7 <- mktrj(modes, mode=7, file="mode_7.pdb")
+```
+
+
+
+
+## Section 6: Working with multiple PDB files
+
