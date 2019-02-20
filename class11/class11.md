@@ -3567,7 +3567,7 @@ new_pdb <- read.pdb("1HEL")
 modes <- nma(new_pdb)
 ```
 
-    ##  Building Hessian...     Done in 0.04 seconds.
+    ##  Building Hessian...     Done in 0.03 seconds.
     ##  Diagonalizing Hessian...    Done in 0.15 seconds.
 
 ``` r
