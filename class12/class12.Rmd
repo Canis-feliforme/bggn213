@@ -1,0 +1,64 @@
+---
+title: "Class 12"
+author: "Amy Prichard"
+date: "February 20, 2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(bio3d)
+pdb.code <- "1hsg"
+file.name <- get.pdb(pdb.code)
+
+hiv <- read.pdb(file.name)
+
+hiv
+```
+
+protein extraction
+```{r}
+prot <- trim.pdb(hiv, "protein")
+prot
+```
+
+```{r}
+prot.filename <- paste0(pdb.code, "_protein.pdb") #paste0() is paste() w/o spaces
+write.pdb(prot, file=prot.filename)
+```
+
+now the ligand...
+```{r}
+ligand <- trim.pdb(hiv, "ligand")
+lig.filename <- paste0(pdb.code, "_ligand.pdb")
+write.pdb(ligand, file=lig.filename)
+```
+
+
+
+Process the output from autodock vina so it can be read by VMD
+```{r}
+# Docking results
+
+res <- read.pdb("all.pdbqt", multi=TRUE)
+res
+
+write.pdb(res, file="results.pdb")
+```
+
+
+
+What is the RMSD to the MK1 compound from the crystal structure?
+```{r}
+# Compare docking results
+ori <-read.pdb("1hsg_ligand.pdbqt")
+rmsd(ori, res)
+```
+
+```{r}
+rmsd(res)
+```
+
