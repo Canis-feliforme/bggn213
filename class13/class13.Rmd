@@ -1,0 +1,83 @@
+---
+title: "Class 13"
+author: "Amy Prichard"
+date: "02/22/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Section 1
+
+```{r}
+genotypes <- "373531-SampleGenotypes-Homo_sapiens_Variation_Sample_rs8067378.csv"
+genotable <- read.csv(genotypes)
+
+genoGG <- genotable$Genotype..forward.strand. == "G|G"
+
+GGtot <- sum(genoGG)
+GGper <- GGtot/nrow(genotable)
+
+print(GGtot)
+print(GGper)
+
+#alternative method to find total
+table(genotable$Genotype..forward.strand.)
+```
+
+## Section 2
+
+```{r}
+#install.packages("seqinr")
+#install.packages("gtools")
+
+library(seqinr)
+library(gtools)
+
+phred <- asc( s2c("DDDDCDEDCDDDDBBDDDCC@") ) - 33
+phred
+
+prob <- 10**(-phred/10)
+```
+
+## Section 4
+
+```{r}
+infile <- "rs8067378_ENSG00000172057.6.txt"
+expr <- read.table(infile, header=TRUE)
+head(expr)
+```
+
+```{r}
+table(expr$geno)  # G/A and A/G are combined
+```
+
+```{r}
+# median expression
+
+GGindex <- expr$geno == "G/G"
+summary(expr$exp[GGindex])
+
+AGindex <- expr$geno == "A/G"
+summary(expr$exp[AGindex])
+
+AAindex <- expr$geno == "A/A"
+summary(expr$exp[AAindex])
+```
+
+```{r}
+# plotting
+boxplot(exp ~ geno, data=expr, ylab="Expression Values", xlab="Genotype", notch=TRUE)  # notch=TRUE gives the boxes that weird shape... not sure why you would want this, but apparently it's kind of cool
+```
+
+```{r}
+library(ggplot2)
+
+# Boxplot with the data shown
+ggplot(expr, aes(geno, exp, fill=geno)) + 
+  geom_boxplot(notch=TRUE, outlier.shape = NA) + 
+  geom_jitter(shape=16, position=position_jitter(0.2), alpha=0.4)
+```
+
