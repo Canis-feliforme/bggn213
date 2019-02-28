@@ -1,0 +1,342 @@
+---
+title: "Class 14"
+author: "Amy Prichard"
+date: "02/27/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Bioconductor and DESeq2 setup
+
+```{r}
+# Install from BioConductor
+#source("http://bioconductor.org/biocLite.R")
+#biocLite()
+
+# For this class, you'll also need DESeq2:
+#biocLite("DESeq2")  # this doesn't work
+```
+
+```{r}
+#library(BiocInstaller)
+#library(DESeq2)
+```
+
+## 2. Import countData and colData
+
+```{r}
+counts <- read.csv("data/airway_scaledcounts.csv", stringsAsFactors = FALSE)
+metadata <- read.csv("data/airway_metadata.csv", stringsAsFactors = FALSE)
+
+head(counts)
+head(metadata)
+```
+
+```{r}
+nrow(counts)
+ncol(counts)
+```
+
+Let's check for metadata to counts correspondence
+```{r}
+metadata$id
+colnames(counts)
+```
+```{r}
+metadata$id == colnames(counts[-1])  # negative indexing means "not 1"
+all(metadata$id == colnames(counts[-1]))  # check to see if all are TRUE
+```
+
+## 3. Toy differential gene expression
+**Note: this analysis is for demonstration only. NEVER do differential expression analysis this way!**
+
+Extract control exps (i.e. columns of our **counts** based on the **metadata**)
+```{r}
+# Find column names (ids) of the 'control' experiments
+control.ids <- metadata$id[metadata[,"dex"] == "control"]  # gets "dex" for ctrls
+control.ids
+
+# Use the ids to extract the control columns
+control <- counts[,control.ids]
+
+# set row names to be the ensgene number (because they're nameless)
+rownames(control) <- counts$ensgene
+head(control)
+```
+
+Now with treatments...
+```{r}
+# Find column names (ids) of the 'treated' experiments
+treated.ids <- metadata$id[metadata[,"dex"] == "treated"]
+treated.ids
+
+# Use the ids to extract the treated columns
+treated <- counts[,treated.ids]
+
+# set row names to be the ensgene number (because they're nameless)
+rownames(treated) <- counts$ensgene
+head(treated)
+```
+
+Find the mean counts value for each gene
+```{r}
+control.mean <- rowMeans(control)
+treated.mean <- rowMeans(treated)
+
+head(control.mean)
+head(treated.mean)
+```
+
+Combine control.mean and treated.mean into one dataframe for ease of organization
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+```
+
+PLOT IT!
+```{r}
+plot(meancounts$control.mean, meancounts$treated.mean, xlab="Control", ylab="Treated")
+```
+
+The data is all crunched up near the origin... this should be plotted on a logarithmic scale.
+```{r}
+plot(meancounts$control.mean, meancounts$treated.mean, xlab="log(Control)", ylab="log(Treated)", log="xy")  # make both x and y axes logarithmic
+```
+
+log2 fold change (why? because log2 makes the math nicer)
+```{r}
+# add a new column to meancounts
+meancounts$log2fc <- log2(meancounts[,"treated.mean"]/meancounts[,"control.mean"])
+head(meancounts)
+```
+
+Positive log2fc is up-regulated in drug treatment
+Negative log2fc is down-regulated in drug treatment
+"NaN" and "Inf" mean something dumb happened (like dividing by zero)
+(NaN when both are zero, Inf when only one is zero)
+We need to filter out these zero entry genes!
+```{r}
+meancounts[,1:2]
+
+# make a vector to play around with
+toy <- c(1,2,0,4,0)
+toy==0         # returns boolean indeces
+which(toy==0)  # returns individual indeces
+# make a matrix to play around with
+newtoy <- cbind(toy,toy)
+which(newtoy==0)  # returns indeces (it indexes both columns as one vector)
+which(newtoy==0, arr.ind=TRUE)  # now it indexes as a matrix
+which(newtoy==0, arr.ind=TRUE)[,1]  # now it gives only rows (no cols)
+unique(which(newtoy==0, arr.ind=TRUE)[,1])  # now only one index per row
+```
+```{r}
+zero.vals <- which(meancounts[,1:2]==0, arr.ind=TRUE)
+
+to.rm <- unique(zero.vals[,1])
+mycounts <- meancounts[-to.rm,]  # - index gives all entries EXCEPT to.rm
+head(mycounts)
+```
+
+A common threshold used for calling something differentially expressed is a log2(FoldChange) of greater than 2 or less than -2. Let’s filter the dataset both ways to see how many genes are up or down-regulated.
+
+```{r}
+up.ind <- mycounts$log2fc > 2
+down.ind <- mycounts$log2fc < (-2)
+```
+
+```{r}
+# how many genes are above this threshold?
+sum(up.ind)
+
+# how many are below?
+sum(down.ind)
+```
+
+## 4. Adding annotation data
+
+```{r}
+anno <- read.csv("data/annotables_grch38.csv")
+head(anno)
+dim(anno)
+```
+
+Let's try out the **merge()** function to add the annotation data to **mycounts** results
+```{r}
+head(mycounts)
+
+# match rownames (ensgene) of mycounts with anno$ensgene
+mycounts.anno <- merge(x=mycounts, y=anno, by.x="row.names", by.y="ensgene")
+head(mycounts.anno)
+```
+
+**Easier way: using an annotation package from BioConductor**
+```{r, eval=FALSE}
+# eval=FALSE means R won't run this code
+biocLite("AnnotationDbi")
+biocLite("org.Hs.eg.db")  # Homo sapiens
+```
+
+```{r}
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+```
+
+This is the organism annotation package (“org”) for Homo sapiens (“Hs”), organized as an AnnotationDbi database package (“db”), using Entrez Gene IDs (“eg”) as primary key. To get a list of all available key types, use:
+```{r}
+columns(org.Hs.eg.db)
+```
+
+Code from the package vignette...
+```{r}
+# make a new column (called symbol) containing the gene symbols
+mycounts$symbol <- mapIds(org.Hs.eg.db,         # takes the table
+                     keys=row.names(mycounts),  # the keys
+                     column="SYMBOL",           # the column to map to
+                     keytype="ENSEMBL",         # where the keys come from
+                     multiVals="first")         # if two ORFs overlap
+head(mycounts[up.ind,])
+```
+
+## 5. DESeq2 analysis
+**doesn't work**
+
+```{r, eval=FALSE}
+library(DESeq2)
+citation("DESeq2")
+
+dds <- DESeqDataSetFromMatrix(countData=counts, 
+                              colData=metadata, 
+                              design=~dex, 
+                              tidy=TRUE)
+dds
+
+#sizeFactors(dds)
+
+#dispersions(dds)
+
+#results(dds)
+
+dds <- DESeq(dds)
+
+# Getting Results
+res <- results(dds)
+res
+
+summary(res)
+
+# Order results table by the smallest p-value
+resOrdered <- res[order(res$pvalue),]
+
+# change p-value cut-off from 0.1 (default) to 0.05
+res05 <- results(dds, alpha=0.05)
+summary(res05)
+
+# access a subset of the data frame passing a threshold
+resSig05 <- subset(as.data.frame(res), padj < 0.05)
+nrow(resSig05)
+
+# arrange and view the results by the adjusted p-value
+ord <- order( resSig01$padj )
+#View(res01[ord,])
+head(resSig01[ord,])
+
+# write ordered significant results to .csv file
+write.csv(resSig01[ord,], "signif01_results.csv")
+```
+
+## 6. Data Visualization
+
+### Plotting counts
+
+```{r, eval=FALSE}
+# relies on DESeq2 data
+
+i <- grep("CRISPLD2", resSig01$symbol)
+resSig01[i,]
+
+rownames(resSig01[i,])
+
+plotCounts(dds, gene="ENSG00000103196", intgroup="dex")
+
+# Return the data
+d <- plotCounts(dds, gene="ENSG00000103196", intgroup="dex", returnData=TRUE)
+head(d)
+
+boxplot(count ~ dex , data=d)
+```
+
+ggplot2
+```{r, eval=FALSE}
+# relies on DESeq2 data
+library(ggplot2)
+ggplot(d, aes(dex, count)) + geom_boxplot(aes(fill=dex)) + scale_y_log10() + ggtitle("CRISPLD2")
+```
+
+Volcano plots
+```{r, eval=FALSE}
+# relies on DESeq2 data
+
+res$sig <- res$padj<0.05 & abs(res$log2FoldChange)>2
+
+# How many of each?
+table(res$sig)
+
+sum(is.na(res$sig))
+
+# Set the color palette for our plot
+palette( c("gray","blue") )
+
+plot( res$log2FoldChange,  -log(res$padj), 
+ col=res$sig+1, ylab="-Log(P-value)", xlab="Log2(FoldChange)")
+
+# Add some cut-off lines
+abline(v=c(-2,2), col="darkgray", lty=2)
+abline(h=-log(0.1), col="darkgray", lty=2)
+
+# Reset the color palette
+palette("default") 
+
+# Setup our custom point color vector 
+mycols <- rep("gray", nrow(res))
+mycols[ abs(res$log2FoldChange) > 2 ]  <- "red" 
+
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2 )
+mycols[ inds ] <- "blue"
+
+#Volcano plot with custom colors 
+plot( res$log2FoldChange,  -log(res$padj), 
+ col=mycols, ylab="-Log(P-value)", xlab="Log2(FoldChange)" )
+
+abline(v=c(-2,2), col="gray", lty=2)
+abline(h=-log(0.1), col="gray", lty=2)
+```
+
+Same with ggplot
+```{r, eval=FALSE}
+# relies on DESeq2 data
+ggplot(as.data.frame(res), aes(log2FoldChange, -log10(pvalue), col=sig)) + 
+    geom_point() + 
+    ggtitle("Volcano plot")
+```
+
+Enhanced Volcano
+```{r, eval=FALSE}
+# relies on DESeq2 data
+
+#biocLite("EnhancedVolcano")
+
+library(EnhancedVolcano)
+
+EnhancedVolcano(res,
+    lab = rownames(res),
+    x = 'log2FoldChange',
+    y = 'pvalue')
+```
+
+### Session Information
+The sessionInfo() function prints version information about R and any attached packages. It is good practice to always run this command at the end of your R session and record it for the sake of reproducibility in the future.
+```{r}
+sessionInfo()
+```
