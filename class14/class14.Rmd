@@ -11,18 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Bioconductor and DESeq2 setup
 
-```{r}
+```{r, eval=FALSE}
 # Install from BioConductor
-#source("http://bioconductor.org/biocLite.R")
-#biocLite()
+source("http://bioconductor.org/biocLite.R")
+biocLite()
 
 # For this class, you'll also need DESeq2:
-#biocLite("DESeq2")  # this doesn't work
+biocLite("DESeq2")  # this doesn't work
+# update: DESeq2 didn't work in R version 3.4.4
 ```
 
-```{r}
-#library(BiocInstaller)
-#library(DESeq2)
+```{r, eval=FALSE}
+library(BiocInstaller)
+library(DESeq2)
 ```
 
 ## 2. Import countData and colData
@@ -173,7 +174,7 @@ head(mycounts.anno)
 
 **Easier way: using an annotation package from BioConductor**
 ```{r, eval=FALSE}
-# eval=FALSE means R won't run this code
+# eval=FALSE means R won't run this code when knitting
 biocLite("AnnotationDbi")
 biocLite("org.Hs.eg.db")  # Homo sapiens
 ```
@@ -200,9 +201,8 @@ head(mycounts[up.ind,])
 ```
 
 ## 5. DESeq2 analysis
-**doesn't work**
 
-```{r, eval=FALSE}
+```{r}
 library(DESeq2)
 citation("DESeq2")
 
@@ -212,13 +212,13 @@ dds <- DESeqDataSetFromMatrix(countData=counts,
                               tidy=TRUE)
 dds
 
-#sizeFactors(dds)
+sizeFactors(dds)
 
-#dispersions(dds)
-
-#results(dds)
+dispersions(dds)
 
 dds <- DESeq(dds)
+
+results(dds)
 
 # Getting Results
 res <- results(dds)
@@ -237,6 +237,9 @@ summary(res05)
 resSig05 <- subset(as.data.frame(res), padj < 0.05)
 nrow(resSig05)
 
+resSig01 <- subset(as.data.frame(res), padj < 0.01)
+nrow(resSig01)
+
 # arrange and view the results by the adjusted p-value
 ord <- order( resSig01$padj )
 #View(res01[ord,])
@@ -250,9 +253,7 @@ write.csv(resSig01[ord,], "signif01_results.csv")
 
 ### Plotting counts
 
-```{r, eval=FALSE}
-# relies on DESeq2 data
-
+```{r}
 i <- grep("CRISPLD2", resSig01$symbol)
 resSig01[i,]
 
@@ -268,16 +269,13 @@ boxplot(count ~ dex , data=d)
 ```
 
 ggplot2
-```{r, eval=FALSE}
-# relies on DESeq2 data
+```{r}
 library(ggplot2)
 ggplot(d, aes(dex, count)) + geom_boxplot(aes(fill=dex)) + scale_y_log10() + ggtitle("CRISPLD2")
 ```
 
 Volcano plots
-```{r, eval=FALSE}
-# relies on DESeq2 data
-
+```{r}
 res$sig <- res$padj<0.05 & abs(res$log2FoldChange)>2
 
 # How many of each?
@@ -314,8 +312,7 @@ abline(h=-log(0.1), col="gray", lty=2)
 ```
 
 Same with ggplot
-```{r, eval=FALSE}
-# relies on DESeq2 data
+```{r}
 ggplot(as.data.frame(res), aes(log2FoldChange, -log10(pvalue), col=sig)) + 
     geom_point() + 
     ggtitle("Volcano plot")
@@ -323,9 +320,9 @@ ggplot(as.data.frame(res), aes(log2FoldChange, -log10(pvalue), col=sig)) +
 
 Enhanced Volcano
 ```{r, eval=FALSE}
-# relies on DESeq2 data
+# This doesn't work because "EnhancedVolcano is not available (for R version 3.5.2)"
 
-#biocLite("EnhancedVolcano")
+biocLite("EnhancedVolcano")
 
 library(EnhancedVolcano)
 

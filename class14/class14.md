@@ -8,16 +8,17 @@ Amy Prichard
 
 ``` r
 # Install from BioConductor
-#source("http://bioconductor.org/biocLite.R")
-#biocLite()
+source("http://bioconductor.org/biocLite.R")
+biocLite()
 
 # For this class, you'll also need DESeq2:
-#biocLite("DESeq2")  # this doesn't work
+biocLite("DESeq2")  # this doesn't work
+# update: DESeq2 didn't work in R version 3.4.4
 ```
 
 ``` r
-#library(BiocInstaller)
-#library(DESeq2)
+library(BiocInstaller)
+library(DESeq2)
 ```
 
 2. Import countData and colData
@@ -39087,7 +39088,7 @@ head(mycounts.anno)
 **Easier way: using an annotation package from BioConductor**
 
 ``` r
-# eval=FALSE means R won't run this code
+# eval=FALSE means R won't run this code when knitting
 biocLite("AnnotationDbi")
 biocLite("org.Hs.eg.db")  # Homo sapiens
 ```
@@ -39117,13 +39118,14 @@ library("AnnotationDbi")
 
     ## The following objects are masked from 'package:base':
     ## 
-    ##     anyDuplicated, append, as.data.frame, cbind, colMeans,
-    ##     colnames, colSums, do.call, duplicated, eval, evalq, Filter,
-    ##     Find, get, grep, grepl, intersect, is.unsorted, lapply,
-    ##     lengths, Map, mapply, match, mget, order, paste, pmax,
-    ##     pmax.int, pmin, pmin.int, Position, rank, rbind, Reduce,
-    ##     rowMeans, rownames, rowSums, sapply, setdiff, sort, table,
-    ##     tapply, union, unique, unsplit, which, which.max, which.min
+    ##     anyDuplicated, append, as.data.frame, basename, cbind,
+    ##     colMeans, colnames, colSums, dirname, do.call, duplicated,
+    ##     eval, evalq, Filter, Find, get, grep, grepl, intersect,
+    ##     is.unsorted, lapply, lengths, Map, mapply, match, mget, order,
+    ##     paste, pmax, pmax.int, pmin, pmin.int, Position, rank, rbind,
+    ##     Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    ##     table, tapply, union, unique, unsplit, which, which.max,
+    ##     which.min
 
     ## Loading required package: Biobase
 
@@ -39143,6 +39145,13 @@ library("AnnotationDbi")
     ## The following object is masked from 'package:base':
     ## 
     ##     expand.grid
+
+    ## 
+    ## Attaching package: 'IRanges'
+
+    ## The following object is masked from 'package:grDevices':
+    ## 
+    ##     windows
 
 ``` r
 library("org.Hs.eg.db")
@@ -39170,7 +39179,7 @@ Code from the package vignette...
 # make a new column (called symbol) containing the gene symbols
 mycounts$symbol <- mapIds(org.Hs.eg.db,         # takes the table
                      keys=row.names(mycounts),  # the keys
-                     column="SYMBOL",           # the oclumn to map to
+                     column="SYMBOL",           # the column to map to
                      keytype="ENSEMBL",         # where the keys come from
                      multiVals="first")         # if two ORFs overlap
 ```
@@ -39192,48 +39201,259 @@ head(mycounts[up.ind,])
 5. DESeq2 analysis
 ------------------
 
-**doesn't work**
-
 ``` r
 library(DESeq2)
-citation("DESeq2")
+```
 
+    ## Loading required package: GenomicRanges
+
+    ## Loading required package: GenomeInfoDb
+
+    ## Loading required package: SummarizedExperiment
+
+    ## Loading required package: DelayedArray
+
+    ## Loading required package: matrixStats
+
+    ## 
+    ## Attaching package: 'matrixStats'
+
+    ## The following objects are masked from 'package:Biobase':
+    ## 
+    ##     anyMissing, rowMedians
+
+    ## Loading required package: BiocParallel
+
+    ## 
+    ## Attaching package: 'DelayedArray'
+
+    ## The following objects are masked from 'package:matrixStats':
+    ## 
+    ##     colMaxs, colMins, colRanges, rowMaxs, rowMins, rowRanges
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     aperm, apply
+
+``` r
+citation("DESeq2")
+```
+
+    ## 
+    ##   Love, M.I., Huber, W., Anders, S. Moderated estimation of fold
+    ##   change and dispersion for RNA-seq data with DESeq2 Genome
+    ##   Biology 15(12):550 (2014)
+    ## 
+    ## A BibTeX entry for LaTeX users is
+    ## 
+    ##   @Article{,
+    ##     title = {Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2},
+    ##     author = {Michael I. Love and Wolfgang Huber and Simon Anders},
+    ##     year = {2014},
+    ##     journal = {Genome Biology},
+    ##     doi = {10.1186/s13059-014-0550-8},
+    ##     volume = {15},
+    ##     issue = {12},
+    ##     pages = {550},
+    ##   }
+
+``` r
 dds <- DESeqDataSetFromMatrix(countData=counts, 
                               colData=metadata, 
                               design=~dex, 
                               tidy=TRUE)
+```
+
+    ## converting counts to integer mode
+
+    ## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
+    ## design formula are characters, converting to factors
+
+``` r
 dds
+```
 
-#sizeFactors(dds)
+    ## class: DESeqDataSet 
+    ## dim: 38694 8 
+    ## metadata(1): version
+    ## assays(1): counts
+    ## rownames(38694): ENSG00000000003 ENSG00000000005 ...
+    ##   ENSG00000283120 ENSG00000283123
+    ## rowData names(0):
+    ## colnames(8): SRR1039508 SRR1039509 ... SRR1039520 SRR1039521
+    ## colData names(4): id dex celltype geo_id
 
-#dispersions(dds)
+``` r
+sizeFactors(dds)
+```
 
-#results(dds)
+    ## NULL
 
+``` r
+dispersions(dds)
+```
+
+    ## NULL
+
+``` r
 dds <- DESeq(dds)
+```
 
+    ## estimating size factors
+
+    ## estimating dispersions
+
+    ## gene-wise dispersion estimates
+
+    ## mean-dispersion relationship
+
+    ## final dispersion estimates
+
+    ## fitting model and testing
+
+``` r
+results(dds)
+```
+
+    ## log2 fold change (MLE): dex treated vs control 
+    ## Wald test p-value: dex treated vs control 
+    ## DataFrame with 38694 rows and 6 columns
+    ##                          baseMean     log2FoldChange             lfcSE
+    ##                         <numeric>          <numeric>         <numeric>
+    ## ENSG00000000003  747.194195359907  -0.35070296228142 0.168242083227575
+    ## ENSG00000000005                 0                 NA                NA
+    ## ENSG00000000419  520.134160051965  0.206107283859668 0.101041504451637
+    ## ENSG00000000457  322.664843927049 0.0245270113332215 0.145133863749003
+    ## ENSG00000000460   87.682625164828 -0.147142630021569  0.25699544204927
+    ## ...                           ...                ...               ...
+    ## ENSG00000283115                 0                 NA                NA
+    ## ENSG00000283116                 0                 NA                NA
+    ## ENSG00000283119                 0                 NA                NA
+    ## ENSG00000283120 0.974916032393564 -0.668250141508022  1.69441251902782
+    ## ENSG00000283123                 0                 NA                NA
+    ##                               stat             pvalue              padj
+    ##                          <numeric>          <numeric>         <numeric>
+    ## ENSG00000000003  -2.08451390730246 0.0371134465299012 0.163017154203989
+    ## ENSG00000000005                 NA                 NA                NA
+    ## ENSG00000000419   2.03982793979795 0.0413674659663301 0.175936611081177
+    ## ENSG00000000457  0.168995785681273  0.865799956262632 0.961682459669788
+    ## ENSG00000000460  -0.57254957071713  0.566949713034425 0.815805192488045
+    ## ...                            ...                ...               ...
+    ## ENSG00000283115                 NA                 NA                NA
+    ## ENSG00000283116                 NA                 NA                NA
+    ## ENSG00000283119                 NA                 NA                NA
+    ## ENSG00000283120 -0.394384563383323  0.693297138831059                NA
+    ## ENSG00000283123                 NA                 NA                NA
+
+``` r
 # Getting Results
 res <- results(dds)
 res
+```
 
+    ## log2 fold change (MLE): dex treated vs control 
+    ## Wald test p-value: dex treated vs control 
+    ## DataFrame with 38694 rows and 6 columns
+    ##                          baseMean     log2FoldChange             lfcSE
+    ##                         <numeric>          <numeric>         <numeric>
+    ## ENSG00000000003  747.194195359907  -0.35070296228142 0.168242083227575
+    ## ENSG00000000005                 0                 NA                NA
+    ## ENSG00000000419  520.134160051965  0.206107283859668 0.101041504451637
+    ## ENSG00000000457  322.664843927049 0.0245270113332215 0.145133863749003
+    ## ENSG00000000460   87.682625164828 -0.147142630021569  0.25699544204927
+    ## ...                           ...                ...               ...
+    ## ENSG00000283115                 0                 NA                NA
+    ## ENSG00000283116                 0                 NA                NA
+    ## ENSG00000283119                 0                 NA                NA
+    ## ENSG00000283120 0.974916032393564 -0.668250141508022  1.69441251902782
+    ## ENSG00000283123                 0                 NA                NA
+    ##                               stat             pvalue              padj
+    ##                          <numeric>          <numeric>         <numeric>
+    ## ENSG00000000003  -2.08451390730246 0.0371134465299012 0.163017154203989
+    ## ENSG00000000005                 NA                 NA                NA
+    ## ENSG00000000419   2.03982793979795 0.0413674659663301 0.175936611081177
+    ## ENSG00000000457  0.168995785681273  0.865799956262632 0.961682459669788
+    ## ENSG00000000460  -0.57254957071713  0.566949713034425 0.815805192488045
+    ## ...                            ...                ...               ...
+    ## ENSG00000283115                 NA                 NA                NA
+    ## ENSG00000283116                 NA                 NA                NA
+    ## ENSG00000283119                 NA                 NA                NA
+    ## ENSG00000283120 -0.394384563383323  0.693297138831059                NA
+    ## ENSG00000283123                 NA                 NA                NA
+
+``` r
 summary(res)
+```
 
+    ## 
+    ## out of 25258 with nonzero total read count
+    ## adjusted p-value < 0.1
+    ## LFC > 0 (up)       : 1564, 6.2%
+    ## LFC < 0 (down)     : 1188, 4.7%
+    ## outliers [1]       : 142, 0.56%
+    ## low counts [2]     : 9971, 39%
+    ## (mean count < 10)
+    ## [1] see 'cooksCutoff' argument of ?results
+    ## [2] see 'independentFiltering' argument of ?results
+
+``` r
 # Order results table by the smallest p-value
 resOrdered <- res[order(res$pvalue),]
 
 # change p-value cut-off from 0.1 (default) to 0.05
 res05 <- results(dds, alpha=0.05)
 summary(res05)
+```
 
+    ## 
+    ## out of 25258 with nonzero total read count
+    ## adjusted p-value < 0.05
+    ## LFC > 0 (up)       : 1237, 4.9%
+    ## LFC < 0 (down)     : 933, 3.7%
+    ## outliers [1]       : 142, 0.56%
+    ## low counts [2]     : 9033, 36%
+    ## (mean count < 6)
+    ## [1] see 'cooksCutoff' argument of ?results
+    ## [2] see 'independentFiltering' argument of ?results
+
+``` r
 # access a subset of the data frame passing a threshold
 resSig05 <- subset(as.data.frame(res), padj < 0.05)
 nrow(resSig05)
+```
 
+    ## [1] 2181
+
+``` r
+resSig01 <- subset(as.data.frame(res), padj < 0.01)
+nrow(resSig01)
+```
+
+    ## [1] 1437
+
+``` r
 # arrange and view the results by the adjusted p-value
 ord <- order( resSig01$padj )
 #View(res01[ord,])
 head(resSig01[ord,])
+```
 
+    ##                   baseMean log2FoldChange      lfcSE      stat
+    ## ENSG00000152583   954.7709       4.368359 0.23713055  18.42175
+    ## ENSG00000179094   743.2527       2.863889 0.17556588  16.31233
+    ## ENSG00000116584  2277.9135      -1.034700 0.06508256 -15.89828
+    ## ENSG00000189221  2383.7537       3.341544 0.21240908  15.73164
+    ## ENSG00000120129  3440.7038       2.965211 0.20369778  14.55691
+    ## ENSG00000148175 13493.9204       1.427168 0.10038114  14.21749
+    ##                       pvalue         padj
+    ## ENSG00000152583 8.792137e-76 1.331569e-71
+    ## ENSG00000179094 8.065679e-60 6.107735e-56
+    ## ENSG00000116584 6.513169e-57 3.288065e-53
+    ## ENSG00000189221 9.179598e-56 3.475625e-52
+    ## ENSG00000120129 5.278831e-48 1.598958e-44
+    ## ENSG00000148175 7.136249e-46 1.801308e-42
+
+``` r
 # write ordered significant results to .csv file
 write.csv(resSig01[ord,], "signif01_results.csv")
 ```
@@ -39244,42 +39464,75 @@ write.csv(resSig01[ord,], "signif01_results.csv")
 ### Plotting counts
 
 ``` r
-# relies on DESeq2 data
-
 i <- grep("CRISPLD2", resSig01$symbol)
 resSig01[i,]
+```
 
+    ## [1] baseMean       log2FoldChange lfcSE          stat          
+    ## [5] pvalue         padj          
+    ## <0 rows> (or 0-length row.names)
+
+``` r
 rownames(resSig01[i,])
+```
 
+    ## character(0)
+
+``` r
 plotCounts(dds, gene="ENSG00000103196", intgroup="dex")
+```
 
+![](class14_files/figure-markdown_github/unnamed-chunk-25-1.png)
+
+``` r
 # Return the data
 d <- plotCounts(dds, gene="ENSG00000103196", intgroup="dex", returnData=TRUE)
 head(d)
+```
 
+    ##                count     dex
+    ## SRR1039508  774.5002 control
+    ## SRR1039509 6258.7915 treated
+    ## SRR1039512 1100.2741 control
+    ## SRR1039513 6093.0324 treated
+    ## SRR1039516  736.9483 control
+    ## SRR1039517 2742.1908 treated
+
+``` r
 boxplot(count ~ dex , data=d)
 ```
+
+![](class14_files/figure-markdown_github/unnamed-chunk-25-2.png)
 
 ggplot2
 
 ``` r
-# relies on DESeq2 data
 library(ggplot2)
 ggplot(d, aes(dex, count)) + geom_boxplot(aes(fill=dex)) + scale_y_log10() + ggtitle("CRISPLD2")
 ```
 
+![](class14_files/figure-markdown_github/unnamed-chunk-26-1.png)
+
 Volcano plots
 
 ``` r
-# relies on DESeq2 data
-
 res$sig <- res$padj<0.05 & abs(res$log2FoldChange)>2
 
 # How many of each?
 table(res$sig)
+```
 
+    ## 
+    ## FALSE  TRUE 
+    ## 24282   167
+
+``` r
 sum(is.na(res$sig))
+```
 
+    ## [1] 14245
+
+``` r
 # Set the color palette for our plot
 palette( c("gray","blue") )
 
@@ -39289,7 +39542,11 @@ plot( res$log2FoldChange,  -log(res$padj),
 # Add some cut-off lines
 abline(v=c(-2,2), col="darkgray", lty=2)
 abline(h=-log(0.1), col="darkgray", lty=2)
+```
 
+![](class14_files/figure-markdown_github/unnamed-chunk-27-1.png)
+
+``` r
 # Reset the color palette
 palette("default") 
 
@@ -39308,21 +39565,26 @@ abline(v=c(-2,2), col="gray", lty=2)
 abline(h=-log(0.1), col="gray", lty=2)
 ```
 
+![](class14_files/figure-markdown_github/unnamed-chunk-27-2.png)
+
 Same with ggplot
 
 ``` r
-# relies on DESeq2 data
 ggplot(as.data.frame(res), aes(log2FoldChange, -log10(pvalue), col=sig)) + 
     geom_point() + 
     ggtitle("Volcano plot")
 ```
 
+    ## Warning: Removed 13578 rows containing missing values (geom_point).
+
+![](class14_files/figure-markdown_github/unnamed-chunk-28-1.png)
+
 Enhanced Volcano
 
 ``` r
-# relies on DESeq2 data
+# This doesn't work because "EnhancedVolcano is not available (for R version 3.5.2)"
 
-#biocLite("EnhancedVolcano")
+biocLite("EnhancedVolcano")
 
 library(EnhancedVolcano)
 
@@ -39340,7 +39602,7 @@ The sessionInfo() function prints version information about R and any attached p
 sessionInfo()
 ```
 
-    ## R version 3.4.4 (2018-03-15)
+    ## R version 3.5.2 (2018-12-20)
     ## Platform: x86_64-w64-mingw32/x64 (64-bit)
     ## Running under: Windows 10 x64 (build 17763)
     ## 
@@ -39358,12 +39620,34 @@ sessionInfo()
     ## [8] methods   base     
     ## 
     ## other attached packages:
-    ## [1] org.Hs.eg.db_3.5.0   AnnotationDbi_1.40.0 IRanges_2.12.0      
-    ## [4] S4Vectors_0.16.0     Biobase_2.38.0       BiocGenerics_0.24.0 
+    ##  [1] ggplot2_3.1.0               DESeq2_1.20.0              
+    ##  [3] SummarizedExperiment_1.10.1 DelayedArray_0.6.6         
+    ##  [5] BiocParallel_1.14.2         matrixStats_0.54.0         
+    ##  [7] GenomicRanges_1.32.7        GenomeInfoDb_1.16.0        
+    ##  [9] org.Hs.eg.db_3.6.0          AnnotationDbi_1.42.1       
+    ## [11] IRanges_2.14.12             S4Vectors_0.18.3           
+    ## [13] Biobase_2.40.0              BiocGenerics_0.26.0        
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] Rcpp_1.0.0      digest_0.6.18   DBI_1.0.0       magrittr_1.5   
-    ##  [5] RSQLite_2.1.1   evaluate_0.13   stringi_1.3.1   blob_1.1.1     
-    ##  [9] rmarkdown_1.11  tools_3.4.4     bit64_0.9-7     stringr_1.4.0  
-    ## [13] bit_1.1-14      xfun_0.5        yaml_2.2.0      compiler_3.4.4 
-    ## [17] pkgconfig_2.0.2 memoise_1.1.0   htmltools_0.3.6 knitr_1.21
+    ##  [1] bit64_0.9-7            splines_3.5.2          Formula_1.2-3         
+    ##  [4] latticeExtra_0.6-28    blob_1.1.1             GenomeInfoDbData_1.1.0
+    ##  [7] yaml_2.2.0             pillar_1.3.1           RSQLite_2.1.1         
+    ## [10] backports_1.1.3        lattice_0.20-38        digest_0.6.18         
+    ## [13] RColorBrewer_1.1-2     XVector_0.20.0         checkmate_1.9.1       
+    ## [16] colorspace_1.4-0       htmltools_0.3.6        Matrix_1.2-15         
+    ## [19] plyr_1.8.4             XML_3.98-1.17          pkgconfig_2.0.2       
+    ## [22] genefilter_1.62.0      zlibbioc_1.26.0        xtable_1.8-3          
+    ## [25] scales_1.0.0           htmlTable_1.13.1       tibble_2.0.1          
+    ## [28] annotate_1.58.0        withr_2.1.2            nnet_7.3-12           
+    ## [31] lazyeval_0.2.1         survival_2.43-3        magrittr_1.5          
+    ## [34] crayon_1.3.4           memoise_1.1.0          evaluate_0.13         
+    ## [37] foreign_0.8-71         tools_3.5.2            data.table_1.12.0     
+    ## [40] stringr_1.4.0          locfit_1.5-9.1         munsell_0.5.0         
+    ## [43] cluster_2.0.7-1        compiler_3.5.2         rlang_0.3.1           
+    ## [46] grid_3.5.2             RCurl_1.95-4.11        rstudioapi_0.9.0      
+    ## [49] htmlwidgets_1.3        labeling_0.3           bitops_1.0-6          
+    ## [52] base64enc_0.1-3        rmarkdown_1.11         gtable_0.2.0          
+    ## [55] DBI_1.0.0              gridExtra_2.3          knitr_1.21            
+    ## [58] bit_1.1-14             Hmisc_4.2-0            stringi_1.3.1         
+    ## [61] Rcpp_1.0.0             geneplotter_1.58.0     rpart_4.1-13          
+    ## [64] acepack_1.4.1          xfun_0.5
