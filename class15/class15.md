@@ -228,7 +228,7 @@ mycols[abs(res$log2FoldChange)>2] <- "red"  # high fold change red
 mycols[(res$padj<0.01) & (abs(res$log2FoldChange)>2)] <- "blue" # high fold change and statistically significant blue
 
 # plot
-plot(res$log2FoldChange, -log(res$padj), col=mycols, xlab="log2(FoldChange)", ylab="-log(P-value)" )
+plot(res$log2FoldChange, -log(res$padj), col=mycols, xlab="log2(FoldChange)", ylab="-log(P-value)")
 ```
 
 ![](class15_files/figure-markdown_github/unnamed-chunk-12-1.png)
