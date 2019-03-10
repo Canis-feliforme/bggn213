@@ -1,0 +1,152 @@
+---
+title: "Class 18"
+author: "Amy Prichard"
+date: "03/08/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 1
+**We skipped to Part 2 in class - nothing for Part 1*
+
+### Section 1. The NCI Genomic Data Commons
+
+#### Exploring the GDC online
+
+##### *Q1. How many Cases (i.e. patient samples) have been found to have p53 mutations?*
+
+##### *Q2. What are the top 6 misssense mutations found in this gene?* HINT: Scroll down to the ‘TP53 - Protein’ section and mouse over the displayed plot. For example R175H is found in 156 cases.
+
+##### *Q3. Which domain of the protein (as annotated by PFAM) do these mutations reside in?*
+
+##### *Q4. What are the top 6 primary sites (i.e. cancer locations such as Lung, Brain, etc.) with p53 mutations and how many primary sites have p53 mutations been found in?* HINT: Clicking on the number links in the Cancer Distribution section will take you to a summary of available data accross cases, genes, and mutations for p53. Looking at the cases data will give you a ranked listing of primary sites.
+
+##### *Q5. What is the most frequentely mutated position associated with cancer in the KRas protein (i.e. the amino acid with the most mutations)?*
+
+##### *Q6. Are KRas mutations common in Pancreatic Adenocarcinoma (i.e. is the Pancreas a common ‘primary site’ for KRas mutations?).*
+
+##### (Also) *Q6. What is the ‘TGCA project’ with the most KRas mutations?*
+
+##### *Q7. What precent of cases for this ‘TGCA project’ have KRas mutations and what precent of cases have p53 mutations?* HINT: Placing your mouse over the project bar in the Cancer Distribution panel will bring up a tooltip with useful summary data.
+
+##### *Q8. How many TGCA Pancreatic Adenocarcinoma cases (i.e. patients from the TCGA-PAAD project) have RNA-Seq data available?*
+
+### Section 2. The GenomicDataCommons R package
+
+### Section 3. Querying the GDC from R
+
+##### *Q9. Write the R code to make a barplot of the cases per project. Lets plot this data with a log scale for the y axis (log="y"), rotated axis labels (las=2) and color the bar coresponding to the TCGA-PAAD project.*
+
+### Section 4. Variant analysis with R
+
+##### Q9. *How many MAF files for the TCGA-PAAD project were found from this advanced web search?*
+
+##### Q10. *What argument could we use to write the MAF file into a csv document in your current working directory?*
+
+#### MAF analysis
+
+#### Plotting MAF summary
+
+#### Drawing oncoplots
+
+#### Oncostrip
+
+##### Q11. *Adapt the code above to produce a lollipop plot for p53 (i.e. the ‘TP53’ gene)?*
+
+# Part 2
+
+## Designing a personalized cancer vaccine
+
+### Section 1. Protein sequences from healthy and tumor tissue
+
+##### *Q1: Identify sequence regions that contain all 9-mer peptides that are only found in the tumor.* HINT: You will need to first identify the sites of mutation in the above sequences and then extract the surrounding subsequence region. This subsequence should encompass all possible 9-mers in the tumor derived sequence. In other words extract the subsequence from 8 residues before and 8 residues after all point mutations in the tumor sequence.
+```{r, eval=FALSE}
+install.packages("bio3d")
+```
+
+```{r message=FALSE}
+library(bio3d)
+```
+
+```{r}
+seqs <- read.fasta("lecture18_sequences.fa")
+seqs
+```
+
+```{r}
+seqs <- seqaln(seqs)  # MUSCLE.exe must be in working directory
+```
+
+```{r}
+## Calculate positional identity scores
+# I did this without bio3d (just using normal R indexing...) but this works too
+ide <- conserv(seqs$ali, method="identity")
+       # Quantifies residue conservation in a given protein sequence alignment by calculating the degree of amino acid variability in each column of the alignment.
+mutant.sites <- which(ide < 1) 
+
+## Exclude gap positions from analysis
+# (this is where I got hung up on for loops and if statements... apparently "gap.inspect()" is a function for this)
+gaps <- gap.inspect(seqs)
+mutant.sites <- mutant.sites[mutant.sites %in% gaps$f.inds]
+
+mutant.sites
+```
+
+```{r}
+## Make a "names" label for our output sequences (one per mutant)
+# not necessary... but nice :)
+mutant.names <- paste0(seqs$ali["P53_wt",mutant.sites],
+                       mutant.sites,
+                       seqs$ali["P53_mutant",mutant.sites])
+
+mutant.names
+```
+
+```{r}
+## Sequence positions surounding each mutant site
+start.position <- mutant.sites - 8
+end.position <-  mutant.sites + 8
+
+# Blank matrix to store sub-sequences
+store.seqs <- matrix("-", nrow=length(mutant.sites), ncol=17)
+rownames(store.seqs) <- mutant.names
+
+## Extract each sub-sequence
+for(i in 1:length(mutant.sites)) {
+  store.seqs[i,] <- seqs$ali["P53_mutant",start.position[i]:end.position[i]]
+}
+
+store.seqs
+```
+
+```{r}
+## First blank out the gap positions 
+store.seqs[store.seqs == "-"] <- ""
+
+## Output a FASTA file for further analysis
+write.fasta(seqs=store.seqs, ids=mutant.names, file="subsequences.fa")
+```
+
+### Section 2. Patient HLA typing results and HLA binding prediction
+
+##### *Q2: Identify 9-mer peptides in the identified sequence regions unique to the tumor that can be potentially presented to T cells.* HINT: Use the IEDB HLA binding prediction server above to identify the top ranked 9-mer peptides for each patient HLA (see above for HLA typing results).
+```{r}
+iedb_result <- read.csv("iedb_result.csv")
+```
+
+##### *Q3: Identify the top peptide for each patient HLA allele (see above).* HINT: You can download a CSV formated result file for all predictions and use R or a spreadsheet application to identify the top ranked peptides for each allele. Which approach would you rather use if you were going to scale to 100s of analysis tasks?
+HLA-A*02:01  YLDDRNTFV
+HLA-B*35:01  FVHSVVVPY
+HLA-B*07:02	 SPLPSQAML
+HLA-A*68:01  FVHSVVVPY
+
+### Section 3. Identifying tumor specific peptides
+
+##### *Q4: Are any of your top ranked peptides unique to the tumor?* HINT: Use NCBI-BLAST to check your top identified peptides against Human sequences in the NR database.
+None have 100% cover (i.e. the mismatch is not present in the human genome, therefore it is unique to the tumor)
+
+##### *Q5: Which peptide would you choose for potential vaccine design and why?*
+Chemically, YLDDRNTFV is best because it doesn't contain histidine (which is prone to aggregation) or methionine (which can have weird chemistry).
