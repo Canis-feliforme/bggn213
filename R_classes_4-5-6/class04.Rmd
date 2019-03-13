@@ -4,7 +4,7 @@ author: "Amy Prichard"
 output: github_document
 ---
 
-# R script
+# Introduction to R
 
 ``` {r}
 # simple calculations
