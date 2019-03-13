@@ -2,8 +2,8 @@ Class04
 ================
 Amy Prichard
 
-R script
-========
+Introduction to R
+=================
 
 ``` r
 # simple calculations
@@ -84,7 +84,7 @@ example(seq)
 date()  # it knows!
 ```
 
-    ## [1] "Wed Mar 13 15:02:40 2019"
+    ## [1] "Wed Mar 13 15:05:32 2019"
 
 ``` r
 # help
